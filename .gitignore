@@ -1,0 +1,6 @@
+# .gitignore file contents
+node_modules/
+.env
+npm-debug.log*
+*.log
+.DS_Store # If on macOS
