@@ -1,0 +1,56 @@
+<!-- FULL CODE SNIPPET: popup.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gift Guru Helper</title>
+    <link rel="stylesheet" href="popup.css">
+    <meta charset="UTF-8">
+</head>
+<body>
+    <div class="container">
+        <h3>Save Gift Idea</h3>
+
+        <div id="loading-state">Loading page info...</div>
+
+        <div id="error-state" class="error-message" style="display: none;"></div>
+        <div id="success-state" class="success-message" style="display: none;"></div>
+
+        <form id="save-gift-form" style="display: none;">
+             <div class="form-group">
+                 <label for="idea-title">Gift Idea / Page Title:</label>
+                 <input type="text" id="idea-title" readonly>
+             </div>
+             <div class="form-group">
+                 <label for="idea-url">URL:</label>
+                 <input type="text" id="idea-url" readonly>
+             </div>
+            <div class="form-group">
+                <label for="person-select">For Person:</label>
+                <select id="person-select" required>
+                    <option value="">-- Select Person --</option>
+                    <!-- Options will be populated by popup.js -->
+                </select>
+                 <div id="loading-people" style="display: none;">Loading people...</div>
+            </div>
+             <div class="form-group">
+                 <label for="notes">Notes (optional):</label>
+                 <textarea id="notes" rows="2"></textarea>
+             </div>
+
+            <button type="submit" id="save-button">Save Idea</button>
+        </form>
+
+         <div id="login-prompt" style="display: none;">
+             <p>Please link your account:</p>
+             <ol>
+                 <li>Log in to the Gift Giving Guru website.</li>
+                 <li>Go to Settings > Connect Extension.</li>
+                 <li>Copy the API Key provided.</li>
+                 <li><a href="#" id="open-options">Click here to open Options</a> and paste the key.</li>
+             </ol>
+         </div>
+
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+/* FULL CODE SNIPPET: popup.css */
+body {
+    font-family: sans-serif;
+    width: 300px; /* Adjust width as needed */
+    padding: 10px;
+    font-size: 14px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+label {
+    display: block;
+    margin-bottom: 3px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+input[type="text"],
+select,
+textarea {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box; /* Include padding in width */
+    font-size: 13px;
+}
+
+ input[readonly] {
+     background-color: #eee;
+     cursor: not-allowed;
+ }
+
+button {
+    padding: 8px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+    margin-top: 5px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled {
+     background-color: #ccc;
+     cursor: not-allowed;
+}
+
+.error-message {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 8px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+ .success-message {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    padding: 8px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    font-size: 13px;
+ }
+
+ #login-prompt ol {
+     padding-left: 20px;
+     font-size: 13px;
+ }
+  #login-prompt li {
+     margin-bottom: 5px;
+  }
+
+  a {
+     color: #007bff;
+     text-decoration: none;
+  }
+   a:hover {
+      text-decoration: underline;
+   }
