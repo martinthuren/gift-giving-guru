@@ -1,13 +1,29 @@
-// FULL CODE SNIPPET: src/pages/AddPersonPage.js (Functional)
+// FULL CODE SNIPPET: src/pages/AddPersonPage.js (Using MUI)
+
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // For redirection
-import { Link } from 'react-router-dom'; // For cancel link
+import { useNavigate, Link as RouterLink } from 'react-router-dom'; // Use RouterLink
+
+// Import MUI Components
+import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link'; // MUI Link
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import IconButton from '@mui/material/IconButton';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Optional: Back icon
+
 function AddPersonPage() {
+    // Form state
     const [name, setName] = useState('');
     const [relationship, setRelationship] = useState('');
-    const [birthday, setBirthday] = useState(''); // Store as string initially for input type="date"
-    const [interests, setInterests] = useState(''); // Simple comma-separated string for now
+    const [birthday, setBirthday] = useState(''); // Store as string 'YYYY-MM-DD'
+    const [interests, setInterests] = useState(''); // Comma-separated string
+
+    // Control state
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
@@ -17,28 +33,20 @@ function AddPersonPage() {
         setError('');
         setIsLoading(true);
 
-        // Prepare data for API (split interests string into an array)
         const interestsArray = interests.split(',')
                                    .map(item => item.trim()) // Trim whitespace
                                    .filter(item => item !== ''); // Remove empty items
 
-        const personData = {
-            name,
-            relationship,
-            interests: interestsArray,
-        };
-        // Only include birthday if it's been set
+        const personData = { name, relationship, interests: interestsArray };
+        // Only include birthday if it's been set (and is a valid date string for the input)
         if (birthday) {
             personData.birthday = birthday;
         }
 
         try {
-            // POST request to the backend endpoint
             const response = await axios.post('/people', personData);
-
             if (response.data.status === 'success') {
-                // Redirect to the people list page after successful creation
-                navigate('/people');
+                navigate('/people'); // Redirect to list on success
             } else {
                 setError(response.data.message || 'Failed to add person.');
             }
@@ -46,7 +54,7 @@ function AddPersonPage() {
             const message = err.response?.data?.message || 'An error occurred while adding the person.';
              if (err.response?.status === 401) {
                  setError('Authentication error. Please log in again.');
-                 navigate('/login'); // Redirect to login on auth error
+                 navigate('/login');
              } else {
                  setError(message);
              }
@@ -57,65 +65,102 @@ function AddPersonPage() {
     };
 
     return (
-        <div>
-            <h2>Add New Person</h2>
+        <Container component="main" maxWidth="sm" sx={{ mt: 4, mb: 4 }}> {/* sm = small/medium width */}
+             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                 {/* Back Button */}
+                 <IconButton component={RouterLink} to="/people" sx={{ mr: 1 }} aria-label="Back to People List">
+                    <ArrowBackIcon />
+                 </IconButton>
+                 {/* Page Title */}
+                <Typography component="h1" variant="h5">
+                    Add New Person
+                </Typography>
+            </Box>
 
-            {error && <div style={{ color: 'red', marginBottom: '15px', border: '1px solid red', padding: '8px' }}>Error: {error}</div>}
+            {/* Error Alert */}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+            )}
 
-            <form onSubmit={handleSubmit} style={{ maxWidth: '400px' }}>
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="name" style={{ display: 'block', marginBottom: '3px' }}>Name:*</label>
-                    <input
-                        type="text"
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                        disabled={isLoading}
-                        style={{ width: '100%', padding: '8px' }}
-                    />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="relationship" style={{ display: 'block', marginBottom: '3px' }}>Relationship:</label>
-                    <input
-                        type="text"
-                        id="relationship"
-                        value={relationship}
-                        onChange={(e) => setRelationship(e.target.value)}
-                        disabled={isLoading}
-                         style={{ width: '100%', padding: '8px' }}
-                    />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="birthday" style={{ display: 'block', marginBottom: '3px' }}>Birthday:</label>
-                    <input
-                        type="date" // HTML5 date picker
-                        id="birthday"
-                        value={birthday}
-                        onChange={(e) => setBirthday(e.target.value)}
-                        disabled={isLoading}
-                        style={{ width: '100%', padding: '8px' }}
-                    />
-                </div>
-                 <div style={{ marginBottom: '15px' }}>
-                    <label htmlFor="interests" style={{ display: 'block', marginBottom: '3px' }}>Interests/Likes (comma-separated):</label>
-                    <input
-                        type="text"
-                        id="interests"
-                        value={interests}
-                        onChange={(e) => setInterests(e.target.value)}
-                        disabled={isLoading}
-                        placeholder="e.g., hiking, sci-fi books, coffee"
-                        style={{ width: '100%', padding: '8px' }}
-                    />
-                </div>
+            {/* Form using Box */}
+            <Box component="form" onSubmit={handleSubmit} noValidate>
+                <TextField
+                    label="Name"
+                    variant="outlined" // Standard MUI input style
+                    margin="normal" // Consistent spacing
+                    required // HTML5 required attribute
+                    fullWidth // Take full container width
+                    id="name"
+                    name="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={isLoading}
+                    autoFocus // Focus this field first
+                />
+                <TextField
+                    label="Relationship"
+                    variant="outlined"
+                    margin="normal"
+                    fullWidth
+                    id="relationship"
+                    name="relationship"
+                    value={relationship}
+                    onChange={(e) => setRelationship(e.target.value)}
+                    disabled={isLoading}
+                />
+                <TextField
+                    label="Birthday"
+                    type="date" // Use browser's date picker
+                    variant="outlined"
+                    margin="normal"
+                    fullWidth
+                    id="birthday"
+                    name="birthday"
+                    value={birthday}
+                    onChange={(e) => setBirthday(e.target.value)}
+                    disabled={isLoading}
+                    InputLabelProps={{
+                      shrink: true, // Ensure label doesn't overlap date input
+                    }}
+                />
+                 <TextField
+                    label="Interests/Likes (comma-separated)"
+                    variant="outlined"
+                    margin="normal"
+                    fullWidth
+                    id="interests"
+                    name="interests"
+                    value={interests}
+                    onChange={(e) => setInterests(e.target.value)}
+                    disabled={isLoading}
+                    placeholder="e.g., hiking, sci-fi books, coffee"
+                />
 
-                <button type="submit" disabled={isLoading} style={{ padding: '10px 15px' }}>
-                    {isLoading ? 'Adding...' : 'Add Person'}
-                </button>
-                 <Link to="/people" style={{ marginLeft: '15px', color: '#6c757d' }}>Cancel</Link>
-            </form>
-        </div>
+                {/* Action Buttons Container */}
+                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}> {/* Align buttons right, add gap */}
+                    <Button
+                        variant="text" // Less emphasis for Cancel
+                        component={RouterLink}
+                        to="/people" // Link back to the list page
+                        disabled={isLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="contained" // Primary action style
+                        color="primary" // Use theme primary color
+                        disabled={isLoading}
+                        sx={{ position: 'relative' }} // Needed for spinner positioning
+                    >
+                       {/* Show spinner inside button when loading */}
+                       {isLoading ? <CircularProgress size={24} sx={{color: 'white', position: 'absolute'}} /> : 'Add Person'}
+                    </Button>
+                </Box>
+            </Box>
+        </Container>
     );
 }
 

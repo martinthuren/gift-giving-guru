@@ -1,65 +1,70 @@
-// FULL CODE SNIPPET: src/App.js (Basic Routing)
+// FULL CODE SNIPPET: src/App.js (Applying MUI Theme)
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import axios from 'axios'; // Import axios
+import axios from 'axios';
 
-// Import Page Components (Create these files)
+// Import MUI ThemeProvider and CssBaseline
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import theme from './theme'; // <-- Import your custom theme
+
+// Import Page Components
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import PeopleListPage from './pages/PeopleListPage';
-import PersonDetailPage from './pages/PersonDetailPage'; // You'll need this
-import AddPersonPage from './pages/AddPersonPage'; // You'll need this
-import NotFoundPage from './pages/NotFoundPage'; // Simple 404 page
-import Navbar from './components/Navbar'; // Simple navigation component
-import EditPersonPage from './pages/EditPersonPage'; // <-- ADD THIS IMPORT LINE
-import SettingsPage from './pages/SettingsPage'; // <-- ADD THIS IMPORT LINE
+import PersonDetailPage from './pages/PersonDetailPage';
+import AddPersonPage from './pages/AddPersonPage';
+import EditPersonPage from './pages/EditPersonPage';
+import SettingsPage from './pages/SettingsPage';
+import NotFoundPage from './pages/NotFoundPage';
+import Navbar from './components/Navbar'; // Assuming this uses MUI now
 
-
-// Configure Axios base URL (optional but recommended)
-axios.defaults.baseURL = 'http://localhost:5000/api'; // Your backend API URL
+// Configure Axios base URL
+axios.defaults.baseURL = 'http://localhost:5000/api';
 
 function App() {
-    const [token, setToken] = useState(localStorage.getItem('authToken')); // Check local storage on load
-    const [isLoading, setIsLoading] = useState(true); // To prevent premature redirects
+    const [token, setToken] = useState(localStorage.getItem('authToken'));
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Function to set token in state and localStorage
     const handleSetToken = (newToken) => {
         if (newToken) {
             localStorage.setItem('authToken', newToken);
-            axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`; // Set auth header for future requests
+            axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
         } else {
             localStorage.removeItem('authToken');
-            delete axios.defaults.headers.common['Authorization']; // Remove auth header
+            delete axios.defaults.headers.common['Authorization'];
         }
         setToken(newToken);
     };
 
-     // Set auth header on initial load if token exists
-     useEffect(() => {
+    useEffect(() => {
          const storedToken = localStorage.getItem('authToken');
          if (storedToken) {
              axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-             setToken(storedToken); // Ensure state is updated
+             setToken(storedToken);
          }
-         setIsLoading(false); // Finished checking token
+         setIsLoading(false);
      }, []);
 
-      // Logout handler
-      const handleLogout = () => {
-          handleSetToken(null); // Clear token
-          // Optionally redirect to login page or home
-      };
+    const handleLogout = () => {
+          handleSetToken(null);
+          // No need to navigate here, Navbar can handle it
+    };
 
-
-     if (isLoading) {
-         return <div>Loading...</div>; // Or a proper spinner component
-     }
+    if (isLoading) {
+         return <div>Loading...</div>; // Or an MUI spinner: <CircularProgress />
+    }
 
     return (
-        <Router>
-            <Navbar token={token} onLogout={handleLogout} /> {/* Pass token and logout handler */}
-            <div className="container" style={{marginTop: '20px'}}> {/* Basic container */}
+        // Apply the theme to the entire application
+        <ThemeProvider theme={theme}>
+             {/* CssBaseline kickstarts an elegant, consistent baseline */}
+            <CssBaseline />
+            <Router>
+                <Navbar token={token} onLogout={handleLogout} />
+                 {/* No need for the extra 'container' div, MUI components handle layout */}
                 <Routes>
                     {/* Public Routes */}
                     <Route path="/login" element={!token ? <LoginPage onLoginSuccess={handleSetToken} /> : <Navigate to="/dashboard" />} />
@@ -73,16 +78,14 @@ function App() {
                      <Route path="/people/:id/edit" element={token ? <EditPersonPage /> : <Navigate to="/login" />} />
                      <Route path="/settings" element={token ? <SettingsPage /> : <Navigate to="/login" />} />
 
-
-
                     {/* Redirect root path */}
                     <Route path="/" element={<Navigate to={token ? "/dashboard" : "/login"} />} />
 
                     {/* 404 Not Found */}
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
-            </div>
-        </Router>
+            </Router>
+        </ThemeProvider>
     );
 }
 

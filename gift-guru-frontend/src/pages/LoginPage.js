@@ -1,7 +1,20 @@
-// FULL CODE SNIPPET: src/pages/LoginPage.js (Functional)
+// FULL CODE SNIPPET: src/pages/LoginPage.js (Using MUI)
+
 import React, { useState } from 'react';
-import axios from 'axios'; // Make sure axios is imported
-import { useNavigate, Link } from 'react-router-dom'; // Import Link for Register link
+import axios from 'axios'; // Make sure axios is imported and configured
+import { useNavigate, Link as RouterLink } from 'react-router-dom'; // Import Link for Register link
+
+// Import MUI Components
+import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link'; // MUI Link component
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'; // Optional: Login icon
+import Avatar from '@mui/material/Avatar'; // Optional: For the icon
 
 // Expect onLoginSuccess prop from App.js to handle token update
 function LoginPage({ onLoginSuccess }) {
@@ -13,76 +26,105 @@ function LoginPage({ onLoginSuccess }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault(); // Prevent default browser form submission
-        setError(''); // Clear previous errors
+        setError('');
         setIsLoading(true);
 
         try {
-            // Axios instance should have baseURL configured in App.js
-            const response = await axios.post('/auth/login', {
-                email: email,
-                password: password
-            });
+            const response = await axios.post('/auth/login', { email, password });
 
-            // Check backend response structure (adjust if necessary)
             if (response.data.status === 'success' && response.data.token) {
-                // Call the function passed from App.js to update the token state
                 onLoginSuccess(response.data.token);
-                // Redirect to the dashboard after successful login
-                navigate('/dashboard');
+                navigate('/dashboard'); // Redirect after successful login
             } else {
-                // Handle cases where backend responds 200 but login wasn't successful (less common)
+                // Handle cases where backend responds 200 but login wasn't successful
                 setError(response.data.message || 'Login failed. Please check your credentials.');
             }
         } catch (err) {
-            // Handle errors (e.g., 401 Unauthorized, network error)
             const message = err.response?.data?.message || 'An error occurred during login.';
             setError(message);
             console.error('Login error:', err.response?.data || err.message || err);
         } finally {
-            // Re-enable the form whether login succeeded or failed
             setIsLoading(false);
         }
     };
 
     return (
-        <div>
-            <h2>Login</h2>
-            <form onSubmit={handleSubmit}>
-                {/* Display error message if login fails */}
-                {error && <div style={{ color: 'red', marginBottom: '10px', border: '1px solid red', padding: '8px' }}>{error}</div>}
+        // Container centers content and sets max width
+        <Container component="main" maxWidth="xs"> {/* 'xs' for extra-small form width */}
+            <Box
+                sx={{
+                    marginTop: 8, // Margin top from AppBar
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                }}
+            >
+                {/* Optional Avatar with Icon */}
+                <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}> {/* Use theme's secondary color */}
+                    <LockOutlinedIcon />
+                </Avatar>
+                <Typography component="h1" variant="h5">
+                    Log In
+                </Typography>
 
-                <div style={{ marginBottom: '10px' }}> {/* Added margin */}
-                    <label htmlFor="email" style={{ marginRight: '5px' }}>Email:</label> {/* Added margin */}
-                    <input
-                        type="email"
+                {/* Display error Alert */}
+                {error && (
+                    <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+                        {error}
+                    </Alert>
+                )}
+
+                {/* Form using Box */}
+                <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+                    <TextField
+                        variant="outlined" // Common TextField style
+                        margin="normal"
+                        required
+                        fullWidth
                         id="email"
+                        label="Email Address"
+                        name="email"
+                        autoComplete="email"
+                        autoFocus
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={isLoading} // Disable input when loading
-                        style={{ padding: '5px' }} // Basic styling
+                        disabled={isLoading}
                     />
-                </div>
-                <div style={{ marginBottom: '10px' }}> {/* Added margin */}
-                    <label htmlFor="password" style={{ marginRight: '5px' }}>Password:</label> {/* Added margin */}
-                    <input
+                    <TextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        name="password"
+                        label="Password"
                         type="password"
                         id="password"
+                        autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isLoading} // Disable input when loading
-                        style={{ padding: '5px' }} // Basic styling
+                        disabled={isLoading}
                     />
-                </div>
-                <button type="submit" style={{ marginTop: '5px', padding: '8px 15px' }} disabled={isLoading}>
-                    {isLoading ? 'Logging in...' : 'Login'}
-                </button>
-            </form>
-            <p style={{ marginTop: '15px' }}>
-                Don't have an account? <Link to="/register">Register here</Link> {/* Use Link component */}
-            </p>
-        </div>
+                    {/* Login Button with Loading state */}
+                    <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained" // Primary button style
+                        color="primary" // Use theme's primary color
+                        sx={{ mt: 3, mb: 2, position: 'relative' }} // Margin top/bottom
+                        disabled={isLoading}
+                    >
+                        {isLoading ? <CircularProgress size={24} sx={{color: 'white', position: 'absolute'}} /> : 'Log In'}
+                    </Button>
+
+                    {/* Link to Register Page */}
+                     <Box sx={{ textAlign: 'right' }}>
+                        <Link component={RouterLink} to="/register" variant="body2">
+                            {"Don't have an account? Register here"}
+                        </Link>
+                     </Box>
+                </Box>
+            </Box>
+        </Container>
     );
 }
 

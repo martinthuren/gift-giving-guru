@@ -1,115 +1,151 @@
-// FULL CODE SNIPPET: src/pages/RegisterPage.js (Functional)
+// FULL CODE SNIPPET: src/pages/RegisterPage.js (Using MUI)
+
 import React, { useState } from 'react';
-import axios from 'axios'; // Make sure axios is imported
-import { useNavigate, Link } from 'react-router-dom'; // Import Link for Login link
+import axios from 'axios';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+
+// Import MUI Components
+import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import Avatar from '@mui/material/Avatar';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'; // Re-use same icon or choose another
 
 // Expect onRegisterSuccess prop from App.js to handle token update
 function RegisterPage({ onRegisterSuccess }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState(''); // Added for confirmation
-    const [error, setError] = useState(''); // To display registration errors
-    const [isLoading, setIsLoading] = useState(false); // To disable form while loading
-    const navigate = useNavigate(); // Hook for programmatic navigation
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Prevent default browser form submission
-        setError(''); // Clear previous errors
+        e.preventDefault();
+        setError('');
 
-        // Basic client-side validation
         if (password !== confirmPassword) {
             setError("Passwords do not match!");
-            return; // Stop submission
+            return;
         }
         if (password.length < 6) {
             setError("Password must be at least 6 characters long.");
-            return; // Stop submission
+            return;
         }
 
         setIsLoading(true);
 
         try {
-            // Axios instance should have baseURL configured in App.js
-            const response = await axios.post('/auth/register', {
-                email: email,
-                password: password
-                // No need to send confirmPassword to backend typically
-            });
+            const response = await axios.post('/auth/register', { email, password });
 
-            // Check backend response structure (adjust if necessary)
             if (response.data.status === 'success' && response.data.token) {
-                // Call the function passed from App.js to update the token state immediately after register
                 onRegisterSuccess(response.data.token);
-                // Redirect to the dashboard after successful registration
-                navigate('/dashboard');
+                navigate('/dashboard'); // Redirect after successful registration
             } else {
-                // Handle cases where backend responds 200 but registration wasn't successful
                 setError(response.data.message || 'Registration failed. Please try again.');
             }
         } catch (err) {
-            // Handle errors (e.g., 400 Bad Request if email exists, network error)
             const message = err.response?.data?.message || 'An error occurred during registration.';
             setError(message);
             console.error('Registration error:', err.response?.data || err.message || err);
         } finally {
-            // Re-enable the form whether registration succeeded or failed
             setIsLoading(false);
         }
     };
 
     return (
-        <div>
-            <h2>Register</h2>
-            <form onSubmit={handleSubmit}>
-                {/* Display error message if registration fails */}
-                {error && <div style={{ color: 'red', marginBottom: '10px', border: '1px solid red', padding: '8px' }}>{error}</div>}
+        <Container component="main" maxWidth="xs">
+            <Box
+                sx={{
+                    marginTop: 8,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                }}
+            >
+                <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
+                    <LockOutlinedIcon />
+                </Avatar>
+                <Typography component="h1" variant="h5">
+                    Register
+                </Typography>
 
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="reg-email" style={{ marginRight: '5px' }}>Email:</label>
-                    <input
-                        type="email"
-                        id="reg-email" // Use different ID than login if needed
+                {error && (
+                    <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+                        {error}
+                    </Alert>
+                )}
+
+                <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+                    <TextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        id="reg-email" // Use different ID if needed
+                        label="Email Address"
+                        name="email"
+                        autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        required
                         disabled={isLoading}
-                        style={{ padding: '5px' }}
                     />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="reg-password" style={{ marginRight: '5px' }}>Password:</label>
-                    <input
+                    <TextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        name="password"
+                        label="Password (min. 6 characters)"
                         type="password"
-                        id="reg-password" // Use different ID
+                        id="reg-password"
+                        autoComplete="new-password" // Hint for browser
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength="6" // Add basic HTML5 validation
                         disabled={isLoading}
-                        style={{ padding: '5px' }}
                     />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="confirm-password" style={{ marginRight: '5px' }}>Confirm Password:</label>
-                    <input
+                     <TextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        name="confirmPassword"
+                        label="Confirm Password"
                         type="password"
                         id="confirm-password"
+                        autoComplete="new-password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        minLength="6"
                         disabled={isLoading}
-                        style={{ padding: '5px' }}
+                        // Add error prop for visual feedback if passwords don't match?
+                        error={password !== confirmPassword && confirmPassword !== ''}
+                        helperText={password !== confirmPassword && confirmPassword !== '' ? "Passwords must match" : ""}
                     />
-                </div>
-                <button type="submit" style={{ marginTop: '5px', padding: '8px 15px' }} disabled={isLoading}>
-                    {isLoading ? 'Registering...' : 'Register'}
-                </button>
-            </form>
-            <p style={{ marginTop: '15px' }}>
-                Already have an account? <Link to="/login">Login here</Link> {/* Use Link component */}
-            </p>
-        </div>
+
+                    <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        color="primary"
+                        sx={{ mt: 3, mb: 2, position: 'relative' }}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? <CircularProgress size={24} sx={{color: 'white', position: 'absolute'}} /> : 'Register'}
+                    </Button>
+
+                     <Box sx={{ textAlign: 'right' }}>
+                         <Link component={RouterLink} to="/login" variant="body2">
+                            {"Already have an account? Login"}
+                         </Link>
+                    </Box>
+                </Box>
+            </Box>
+        </Container>
     );
 }
 

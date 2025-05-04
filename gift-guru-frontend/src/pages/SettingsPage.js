@@ -1,14 +1,27 @@
-// FULL CODE SNIPPET: src/pages/SettingsPage.js
+// FULL CODE SNIPPET: src/pages/SettingsPage.js (Using MUI)
 
 import React, { useState } from 'react';
 import axios from 'axios'; // Ensure axios is configured
 import { useNavigate } from 'react-router-dom';
 
+// Import MUI Components
+import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField'; // To display the key (read-only)
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import Paper from '@mui/material/Paper'; // For containing the API key section
+import IconButton from '@mui/material/IconButton';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'; // Copy icon
+import VpnKeyIcon from '@mui/icons-material/VpnKey'; // Key generation icon
+
 function SettingsPage() {
     const [apiKey, setApiKey] = useState(''); // To display the generated key
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const [message, setMessage] = useState(''); // To display success message
+    const [message, setMessage] = useState(''); // To display success/copy message
     const navigate = useNavigate();
 
     const handleGenerateKey = async () => {
@@ -18,13 +31,12 @@ function SettingsPage() {
         setApiKey(''); // Clear previous key display
 
         try {
-            // Send POST request to the backend endpoint
-            // Auth token should be attached automatically by axios interceptor/defaults
             const response = await axios.post('/users/me/api-key');
 
             if (response.data.status === 'success' && response.data.apiKey) {
                 setApiKey(response.data.apiKey);
-                setMessage(response.data.message || 'API Key generated successfully! Copy it now.');
+                // Use a more concise success message, copy feedback will be separate
+                setMessage('New API Key generated below. Copy it now!');
             } else {
                 setError(response.data.message || 'Failed to generate API Key.');
             }
@@ -32,7 +44,7 @@ function SettingsPage() {
              const errMsg = err.response?.data?.message || 'An error occurred while generating the API key.';
              if (err.response?.status === 401) {
                  setError('Authentication error. Please log in again.');
-                 navigate('/login'); // Redirect if not logged in
+                 navigate('/login');
              } else {
                  setError(errMsg);
              }
@@ -42,60 +54,117 @@ function SettingsPage() {
         }
     };
 
-    // Simple copy to clipboard function
+    // Copy to clipboard function
     const copyToClipboard = () => {
         if (apiKey) {
             navigator.clipboard.writeText(apiKey)
                 .then(() => {
-                    setMessage('API Key copied to clipboard!');
+                    setMessage('API Key copied to clipboard!'); // Overwrite previous message
                     // Optional: Clear message after a few seconds
-                    // setTimeout(() => setMessage('API Key generated successfully! Copy it now.'), 3000);
+                    setTimeout(() => {
+                         // Only clear if it's still the 'copied' message
+                         if (message === 'API Key copied to clipboard!') {
+                            setMessage('');
+                         }
+                    }, 3000);
                 })
                 .catch(err => {
                     console.error('Failed to copy API key: ', err);
-                    setError('Failed to copy key automatically. Please copy it manually.');
+                    setError('Failed to copy key automatically. Please select and copy manually.');
                 });
         }
     };
 
     return (
-        <div>
-            <h2>Settings</h2>
+        <Container component="main" maxWidth="md" sx={{ mt: 4, mb: 4 }}> {/* Medium width */}
+            <Typography component="h1" variant="h4" gutterBottom>
+                Settings
+            </Typography>
 
-            <div style={{ marginTop: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '5px' }}>
-                <h3>Chrome Extension API Key</h3>
-                <p>Generate an API key to connect the Gift Giving Guru Chrome Extension to your account.</p>
-                <p>This key allows the extension to save gift ideas directly to your profile.</p>
+            {/* API Key Section using Paper for elevation/containment */}
+            <Paper elevation={2} sx={{ p: 3, mt: 3 }}> {/* Padding and margin top */}
+                <Typography component="h2" variant="h6" gutterBottom>
+                    Chrome Extension API Key
+                </Typography>
+                <Typography variant="body1" paragraph> {/* paragraph adds bottom margin */}
+                    Generate an API key to connect the Gift Giving Guru Chrome Extension.
+                    This allows the extension to save gift ideas directly to your account.
+                </Typography>
 
-                <button onClick={handleGenerateKey} disabled={isLoading} style={{ padding: '10px 15px' }}>
-                    {isLoading ? 'Generating...' : 'Generate/Regenerate API Key'}
-                </button>
+                {/* Button aligned to the start */}
+                 <Box sx={{ mt: 2, mb: 2 }}>
+                    <Button
+                        variant="contained"
+                        onClick={handleGenerateKey}
+                        disabled={isLoading}
+                        startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <VpnKeyIcon />}
+                        sx={{ position: 'relative' }} // For spinner positioning if needed
+                    >
+                        {isLoading ? 'Generating...' : 'Generate / Regenerate API Key'}
+                    </Button>
+                </Box>
 
-                {error && <div style={{ color: 'red', marginTop: '15px', border: '1px solid red', padding: '8px' }}>Error: {error}</div>}
-
-                {message && <div style={{ color: 'green', marginTop: '15px', border: '1px solid green', padding: '8px' }}>{message}</div>}
-
-                {apiKey && (
-                    <div style={{ marginTop: '15px', background: '#f0f0f0', padding: '10px', borderRadius: '4px', fontFamily: 'monospace', position: 'relative' }}>
-                       <p>Your API Key (copy this and paste it into the extension options):</p>
-                       <strong style={{ wordBreak: 'break-all' }}>{apiKey}</strong>
-                       <button
-                           onClick={copyToClipboard}
-                           style={{ position: 'absolute', top: '5px', right: '5px', cursor: 'pointer', background: '#eee', border: '1px solid #ccc', padding: '3px 6px' }}
-                           title="Copy to Clipboard"
-                        >
-                            Copy
-                        </button>
-                    </div>
+                {/* Display Error Alert */}
+                {error && (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                        {error}
+                    </Alert>
                 )}
-                 <p style={{marginTop: '10px', fontSize: '0.9em', color: '#666'}}>
-                    Treat this key like a password. If you regenerate the key, the old one will stop working.
-                </p>
-            </div>
 
-            {/* Add other settings sections here later */}
+                {/* Display Success/Info Message Alert */}
+                {message && (
+                    <Alert severity="success" sx={{ mt: 2 }}>
+                        {message}
+                    </Alert>
+                )}
 
-        </div>
+                {/* Display Generated Key if available */}
+                {apiKey && (
+                    <Box sx={{ mt: 2 }}>
+                         <Typography variant="body2" sx={{ mb: 1 }}>
+                            Your API Key (copy and paste into the extension's options page):
+                         </Typography>
+                         {/* Use TextField for easy selection/copy, make it read-only */}
+                         <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={apiKey}
+                            id="api-key-display"
+                            InputProps={{ // Add copy button inside the text field
+                                readOnly: true,
+                                endAdornment: (
+                                    <IconButton
+                                        aria-label="copy api key"
+                                        onClick={copyToClipboard}
+                                        edge="end"
+                                        title="Copy to Clipboard"
+                                    >
+                                        <ContentCopyIcon />
+                                    </IconButton>
+                                ),
+                            }}
+                            // Use monospace font for key visibility
+                            sx={{'.MuiInputBase-input': { fontFamily: 'monospace', fontSize: '0.9em' } }}
+                        />
+                    </Box>
+                )}
+
+                <Typography variant="caption" display="block" sx={{ mt: 2, color: 'text.secondary' }}>
+                     Treat this key like a password. If you regenerate the key, the old one will stop working.
+                </Typography>
+            </Paper>
+
+            {/* Placeholder for other settings sections */}
+            {/* <Paper elevation={2} sx={{ p: 3, mt: 4 }}>
+                <Typography component="h2" variant="h6" gutterBottom>
+                    Other Settings
+                </Typography>
+                <Typography variant="body1">
+                    (Future settings like profile updates, etc.)
+                </Typography>
+            </Paper> */}
+
+        </Container>
     );
 }
 
