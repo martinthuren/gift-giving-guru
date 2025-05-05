@@ -1,13 +1,32 @@
-// FULL CODE SNIPPET: background.js (Basic Reminder Example)
+// FULL CODE SNIPPET: background.js (Reminders/Notifications)
+
+// --- Configuration ---
 const API_BASE_URL = 'http://localhost:5000/api'; // Your backend API URL
-const REMINDER_ALARM_NAME = 'giftGuruReminderCheck';
+const ALARM_NAME = 'giftGuruCheckAlarm';
+// Check once a day. REMEMBER TO CHANGE THIS FROM 1 FOR PRODUCTION!
+const CHECK_INTERVAL_MINUTES = 1; // Set to 1 for testing, use 1440 for daily in production
 
-async function fetchUpcomingEvents(apiKey) {
-    if (!apiKey) return null; // Need API key
-
+// --- Helper: Fetch API Key ---
+async function getApiKey() {
     try {
-        // Create a dedicated API endpoint for upcoming events
-        const response = await fetch(`${API_BASE_URL}/events/upcoming?limit=5`, { // Example: /api/events/upcoming
+        const result = await chrome.storage.local.get(['apiKey']);
+        return result.apiKey || null;
+    } catch (error) {
+        console.error("GiftGuru BG: Error getting API key:", error);
+        return null;
+    }
+}
+
+// --- Helper: Fetch Upcoming Events ---
+async function fetchUpcomingEvents(apiKey) {
+    if (!apiKey) {
+        console.log("GiftGuru BG: No API Key, skipping event fetch.");
+        return null;
+    }
+    console.log("GiftGuru BG: Fetching upcoming events...");
+    try {
+        // Ensure this endpoint matches your backend route
+        const response = await fetch(`${API_BASE_URL}/events/upcoming`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
@@ -16,85 +35,146 @@ async function fetchUpcomingEvents(apiKey) {
         });
 
         if (!response.ok) {
-            console.error(`Upcoming events fetch failed: ${response.status}`);
-            return null;
+             if (response.status === 401) console.error("GiftGuru BG: Authentication failed fetching events (Invalid API Key?).");
+             else console.error(`GiftGuru BG: HTTP error fetching events: ${response.status}`);
+            return null; // Return null on error
         }
         const data = await response.json();
-        return data.data.events; // Adjust based on your actual API response structure
+        // Check the structure matches what your API actually returns
+        if (data.status === 'success' && data.data && Array.isArray(data.data.events)) {
+             console.log(`GiftGuru BG: Found ${data.data.events.length} upcoming events.`);
+             return data.data.events;
+        } else {
+             console.error("GiftGuru BG: Unexpected API response format for events:", data);
+             return null; // Return null if format is wrong
+        }
     } catch (error) {
-        console.error('Error fetching upcoming events:', error);
-        return null;
+        console.error('GiftGuru BG: Network or other error fetching upcoming events:', error);
+        return null; // Return null on error
     }
 }
 
+// --- Helper: Show Notifications ---
 async function showNotifications() {
-    console.log("Checking for upcoming events...");
-     const { apiKey } = await chrome.storage.local.get(['apiKey']);
-     if (!apiKey) {
-         console.log("API Key not set, skipping reminders.");
-         return;
-     }
+    const apiKey = await getApiKey();
+    if (!apiKey) return; // Don't proceed without key
 
     const upcomingEvents = await fetchUpcomingEvents(apiKey);
 
-    if (upcomingEvents && upcomingEvents.length > 0) {
+    // Ensure upcomingEvents is an array before trying to iterate
+    if (upcomingEvents && Array.isArray(upcomingEvents) && upcomingEvents.length > 0) {
         upcomingEvents.forEach(event => {
-             // Customize notification based on your event data structure
-             const notificationId = `gift-reminder-${event.personId}-${event.date}`; // Unique ID
-            const eventDate = new Date(event.date).toLocaleDateString();
+            // Validate expected event properties
+            if (!event || !event.name || typeof event.daysRemaining === 'undefined' || !event.date || !event.personId) {
+                 console.warn("GiftGuru BG: Skipping event due to missing properties:", event);
+                 return; // Skip this event if data is incomplete
+            }
+
+            const days = event.daysRemaining;
+            let message = '';
+            // Construct the message based on days remaining
+            if (days === 0) message = `It's ${event.name}'s Birthday Today! 🎉`;
+            else if (days === 1) message = `${event.name}'s Birthday is Tomorrow!`;
+            else message = `${event.name}'s Birthday is in ${days} days (${new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}).`;
+
+            message += " Don't forget a gift!"; // Append call to action
+
+            // Create a unique ID for the notification to prevent duplicates or allow updates/clearing
+            const notificationId = `gift-guru-reminder-${event.personId}-${event.date}`;
+
+            // Create the notification using Chrome API
             chrome.notifications.create(notificationId, {
                 type: 'basic',
-                iconUrl: 'icons/icon128.png', // Use your icon
-                title: `Upcoming Event: ${event.type || 'Birthday/Anniversary'}!`, // e.g., Birthday
-                message: `${event.personName}'s ${event.type || 'event'} is on ${eventDate}. Any gift ideas?`,
-                priority: 1 // Range from -2 to 2
-                // buttons: [ { title: 'View Ideas' } ] // Optional buttons
+                iconUrl: 'icons/icon128.png', // Ensure this icon exists
+                title: 'Gift Guru Reminder',
+                message: message,
+                priority: 1, // Higher priority than default
+                // Optional: Add buttons requires adding the click listener below
+                // buttons: [ { title: 'View Person' } ]
             });
+             console.log(`GiftGuru BG: Showing notification for ${event.name}`);
         });
     } else {
-         console.log("No upcoming events found or error fetching.");
+        console.log("GiftGuru BG: No upcoming events to notify about or fetch failed.");
     }
 }
 
 // --- Alarm Listener ---
+// Listens for the alarm set previously
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-    if (alarm.name === REMINDER_ALARM_NAME) {
-        await showNotifications();
+    console.log("GiftGuru BG: Alarm triggered -", alarm.name);
+    // Check if it's the correct alarm
+    if (alarm.name === ALARM_NAME) {
+        console.log("GiftGuru BG: Running scheduled check via alarm...");
+        await showNotifications(); // Call the function to check and notify
     }
 });
 
-// --- Extension Startup / Install ---
-chrome.runtime.onStartup.addListener(() => {
-    console.log("Extension startup: Setting up alarm.");
-     // Check/create alarm on browser startup
-    chrome.alarms.get(REMINDER_ALARM_NAME, (alarm) => {
-        if (!alarm) {
-            // Create alarm to check roughly daily (1440 minutes)
-            // Use shorter period for testing (e.g., 1 minute)
-            chrome.alarms.create(REMINDER_ALARM_NAME, { periodInMinutes: 1440 });
-             console.log("Reminder alarm created.");
-        }
+// --- Extension Lifecycle Events ---
+
+// On Install or Update: Set up the alarm. This ensures the alarm is set initially
+// and also resets it if the extension is updated.
+chrome.runtime.onInstalled.addListener((details) => {
+    console.log(`GiftGuru BG: onInstalled event triggered (reason: ${details.reason}). Setting up alarm.`);
+    // Create the alarm to run periodically
+    chrome.alarms.create(ALARM_NAME, {
+        // delayInMinutes: 1, // Optional: Delay the very first run after install/update
+        periodInMinutes: CHECK_INTERVAL_MINUTES // Use the configured interval
     });
-    // Optional: Run check immediately on startup too
-    // showNotifications();
+    // Optional: Run check immediately on install/update for immediate feedback/testing
+    // setTimeout(showNotifications, 2000); // Run after a short delay
 });
 
- chrome.runtime.onInstalled.addListener(() => {
-     console.log("Extension installed/updated: Setting up alarm.");
-     // Check/create alarm on install/update
-    chrome.alarms.create(REMINDER_ALARM_NAME, { periodInMinutes: 1440 });
-      console.log("Reminder alarm created.");
-     // Optional: Run check immediately on install too
-     // showNotifications();
- });
+// On Browser Startup: Ensure the alarm exists. Sometimes alarms can be cleared.
+chrome.runtime.onStartup.addListener(() => {
+     console.log("GiftGuru BG: onStartup event triggered. Checking alarm status.");
+     // Get the alarm to see if it exists
+     chrome.alarms.get(ALARM_NAME, (alarm) => {
+        if (!alarm) {
+             console.log("GiftGuru BG: Alarm not found on startup, creating it.");
+             // If alarm doesn't exist, create it again
+             chrome.alarms.create(ALARM_NAME, { periodInMinutes: CHECK_INTERVAL_MINUTES });
+        } else {
+             console.log("GiftGuru BG: Alarm already exists.");
+        }
+     });
+     // Optional: Run check shortly after startup, e.g., after 1 minute
+     // setTimeout(showNotifications, 60 * 1000);
+});
 
-// --- Optional: Handle notification button clicks ---
-// chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
-//     if (notificationId.startsWith('gift-reminder-') && buttonIndex === 0) {
-//         // Extract personId or relevant info from notificationId
-//         // Open the website page for that person's gift ideas
-//         // chrome.tabs.create({ url: 'YOUR_WEBSITE_URL/people/PERSON_ID' });
-//     }
-// });
 
-console.log("Gift Guru background service worker started.");
+// --- Optional: Notification Click/Button Listener ---
+// Uncomment and modify if you add buttons to your notifications
+/*
+chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
+    console.log(`GiftGuru BG: Notification button clicked: ${notificationId}, Index: ${buttonIndex}`);
+    // Example: Open person detail page if first button ('View Person') is clicked
+    if (notificationId.startsWith('gift-guru-reminder-') && buttonIndex === 0) {
+        const parts = notificationId.split('-'); // Simple split assuming format is consistent
+        const personId = parts[parts.length - 2]; // Get ID from ID structure
+        if (personId) {
+             // Construct the URL to your web application's person detail page
+             // IMPORTANT: Replace localhost:3000 with your DEPLOYED frontend URL eventually
+             const personUrl = `http://localhost:3000/people/${personId}`;
+             chrome.tabs.create({ url: personUrl }); // Open URL in a new tab
+        } else {
+             console.error("GiftGuru BG: Could not extract personId from notificationId:", notificationId);
+        }
+    }
+    // Automatically clear the notification after a button is clicked
+    chrome.notifications.clear(notificationId);
+});
+
+// Optional: Handle clicks on the main body of the notification (not a button)
+chrome.notifications.onClicked.addListener((notificationId) => {
+     console.log(`GiftGuru BG: Notification clicked: ${notificationId}`);
+     // Example: Open the dashboard page
+     // const dashboardUrl = `http://localhost:3000/dashboard`; // Replace with deployed URL
+     // chrome.tabs.create({ url: dashboardUrl });
+     // Automatically clear the notification when clicked
+     chrome.notifications.clear(notificationId);
+});
+*/
+
+// Log confirmation that the service worker has started
+console.log("GiftGuru Background Service Worker initialized.");
