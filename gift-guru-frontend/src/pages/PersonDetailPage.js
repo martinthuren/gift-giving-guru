@@ -46,6 +46,10 @@ function PersonDetailPage() {
     const [isLoadingPerson, setIsLoadingPerson] = useState(true);
     const [isLoadingIdeas, setIsLoadingIdeas] = useState(true);
     const [error, setError] = useState(''); // General page/fetch error
+    const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+    const [history, setHistory] = useState([]);
+    const [historyError, setHistoryError] = useState(''); // Initialize history error state
+
 
     // State for Add Gift Idea Form
     const [newIdeaText, setNewIdeaText] = useState('');
@@ -98,6 +102,37 @@ function PersonDetailPage() {
         fetchPersonDetails();
         fetchGiftIdeas();
     }, [fetchPersonDetails, fetchGiftIdeas]);
+    
+    // Add alongside fetchPersonDetails, fetchGiftIdeas
+const fetchHistory = useCallback(async () => {
+    setIsLoadingHistory(true);
+    setHistoryError(''); // Clear specific history error on new fetch
+    try {
+        const response = await axios.get(`/history?person=${personId}`);
+        if (response.data.status === 'success') {
+            setHistory(response.data.data.history);
+        } else {
+             // Don't set general 'error', maybe just log or use historyError
+             console.error('Failed to load history (API success false)');
+             setHistoryError('Could not load gift history.');
+        }
+    } catch (err) {
+        const msg = err.response?.data?.message || 'Error loading gift history.';
+        if (err.response?.status === 401) {setError('Auth error.'); navigate('/login');} // General auth error
+        else setHistoryError(msg); // Set specific history error
+        console.error('Fetch history error:', err);
+        setHistory([]); // Clear history on error
+    } finally {
+        setIsLoadingHistory(false);
+    }
+}, [personId, navigate]); // Dependencies
+
+// Modify the main useEffect
+useEffect(() => {
+    fetchPersonDetails();
+    fetchGiftIdeas();
+    fetchHistory(); // <-- ADD THIS CALL
+}, [fetchPersonDetails, fetchGiftIdeas, fetchHistory]); // <-- ADD DEPENDENCY
 
 
     // --- Action Handlers ---
@@ -311,6 +346,57 @@ function PersonDetailPage() {
                     ))}
                 </List>
             )}
+
+              {/* --- Gift History Section --- */}
+              <Typography variant="h5" component="h2" gutterBottom sx={{ mt: 4 }}>
+                Gift History
+            </Typography>
+            <Paper elevation={1} sx={{ p: { xs: 1, sm: 2 } }}> {/* Add padding */}
+                 {isLoadingHistory ? (
+                     <Box sx={{ textAlign: 'center', p: 2 }}><CircularProgress size={30} /></Box>
+                 ) : historyError ? (
+                     <Alert severity="warning" sx={{ m: 1 }}>{historyError}</Alert> // Use warning for non-critical
+                 ) : history.length === 0 ? (
+                     <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+                         No past gifts logged for {person.name}.
+                     </Typography>
+                 ) : (
+                     <List dense disablePadding> {/* dense makes list items smaller */}
+                         {history.map((record, index) => (
+                             <React.Fragment key={record._id}>
+                                 <ListItem alignItems="flex-start">
+                                     <ListItemText
+                                         primary={record.giftDescription}
+                                         secondary={
+                                             <>
+                                                 <Typography component="span" variant="body2" color="text.primary">
+                                                      {record.event ? `${record.event} - ` : ''}
+                                                      {new Date(record.dateGiven).toLocaleDateString()}
+                                                 </Typography>
+                                                 {record.notes && (
+                                                     <Typography component="span" variant="caption" display="block" sx={{ mt: 0.5, color: 'text.secondary' }}>
+                                                         Notes: {record.notes}
+                                                     </Typography>
+                                                 )}
+                                                 {/* Optional: Delete button */}
+                                                 {/* <IconButton size="small" edge="end" sx={{position: 'absolute', right: 16, top: 10}} onClick={() => handleDeleteHistory(record._id)}> <DeleteIcon fontSize="small"/> </IconButton> */}
+                                             </>
+                                         }
+                                     />
+                                      {/* Optional: Display cost */}
+                                      {typeof record.cost === 'number' && (
+                                            <Typography variant="body2" sx={{ml: 2, minWidth: '50px', textAlign: 'right'}}>${record.cost.toFixed(2)}</Typography>
+                                      )}
+                                 </ListItem>
+                                 {index < history.length - 1 && <Divider component="li" variant="middle" />}
+                             </React.Fragment>
+                         ))}
+                     </List>
+                 )}
+                 {/* Add Button/Form to manually log history later if desired */}
+                 {/* <Box sx={{mt: 2, textAlign: 'right'}}> <Button size="small">Log Past Gift</Button> </Box> */}
+            </Paper>
+
 
             {/* --- Edit Gift Idea Dialog (Modal) --- */}
             <Dialog open={isEditModalOpen} onClose={closeEditModal} maxWidth="sm" fullWidth>

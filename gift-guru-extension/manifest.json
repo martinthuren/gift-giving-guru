@@ -1,34 +1,28 @@
-// FULL CODE SNIPPET: manifest.json (Initial Version)
 {
     "manifest_version": 3,
     "name": "Gift Giving Guru Helper",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Quickly save gift ideas from any webpage to your Gift Giving Guru account.",
     "icons": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
     },
     "permissions": [
-      "storage",      // Required to save the API key locally
-      "activeTab"     // Required to get URL/title of the current page for the popup
-      // "notifications" // Add later for reminders if needed
-      // "scripting"     // Add later if content scripts are needed
+        "storage",
+        "activeTab",
+        "scripting"
     ],
     "host_permissions": [
-       // Not strictly needed *yet* just for saving URLs from the popup,
-       // but needed if popup.js makes fetch calls TO your API.
-       "http://localhost:5000/*"
+        "http://localhost:5000/*",
+        "<all_urls>"
     ],
     "action": {
-      "default_popup": "popup.html",
-      "default_icon": {
-        "16": "icons/icon16.png",
-        "48": "icons/icon48.png"
-      }
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icons/icon16.png",
+            "48": "icons/icon48.png"
+        }
     },
-    "options_page": "options.html" // Specifies the file for the extension's options/settings
-    // "background": { // Add later for background tasks like reminders
-    //   "service_worker": "background.js"
-    // }
-}
+    "options_page": "options.html"
+} 

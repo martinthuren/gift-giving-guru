@@ -21,7 +21,7 @@ const peopleRouter = require('./routes/peopleRoutes'); // Keep commented out
 const giftIdeaRouter = require('./routes/giftIdeaRoutes'); // Keep commented out
 const eventRouter = require('./routes/eventRoutes'); // <-- ADD THIS LINE
 const userRouter = require('./routes/userRoutes'); // <-- ADD THIS LINE
-
+const giftHistoryRouter = require('./routes/giftHistoryRoutes'); // <-- ADD THIS LINE
 
 const app = express();
 
@@ -59,6 +59,7 @@ app.use('/api/people', peopleRouter);       // Keep commented out
 app.use('/api/gift-ideas', giftIdeaRouter);  // Keep commented out
 app.use('/api/events', eventRouter);       // Keep commented out
 app.use('/api/users', userRouter);       // Keep commented out
+app.use('/api/history', giftHistoryRouter); // <-- ADD THIS LINE
 // --- Handle Unhandled Routes ---
 // Use the corrected RegEx version
 app.all(/.*/, (req, res, next) => {
