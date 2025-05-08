@@ -277,7 +277,7 @@ function PersonDetailPage() {
 
             {/* --- Add Gift Idea Section --- */}
             <Paper elevation={1} sx={{ p: 2, mb: 4 }}>
-                 <Typography variant="h6" component="h2" gutterBottom>Add New Gift Idea</Typography>
+                 <Typography variant="h6" component="h2" gutterBottom>Add a new gift idea</Typography>
                  {addError && <Alert severity="error" sx={{ mb: 2 }}>{addError}</Alert>}
                  <Box component="form" onSubmit={handleAddGiftIdea} noValidate>
                      <Stack spacing={2}>

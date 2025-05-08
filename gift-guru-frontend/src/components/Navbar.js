@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom'; // Use RouterLink for react-router
+import logo from '../logoGiftGuru.png';
 
 // Import MUI components
 import AppBar from '@mui/material/AppBar';
@@ -12,7 +13,6 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link'; // MUI Link component
 import IconButton from '@mui/material/IconButton'; // For potential icon buttons later
 import SettingsIcon from '@mui/icons-material/Settings'; // Example icon
-import CakeIcon from '@mui/icons-material/Cake'; // Example icon for title
 
 function Navbar({ token, onLogout }) {
     const navigate = useNavigate();
@@ -38,9 +38,16 @@ function Navbar({ token, onLogout }) {
                         alignItems: 'center'
                     }}
                 >
-                    <CakeIcon sx={{ mr: 1 }} /> {/* Margin right */}
+                    <img 
+                        src={logo} 
+                        alt="Gift Guru Logo" 
+                        style={{ 
+                            height: '64px', 
+                            marginRight: '8px' 
+                        }} 
+                    />
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        Gift Guru
+                        Welcome to Gift Guru!
                     </Typography>
                 </Link>
 

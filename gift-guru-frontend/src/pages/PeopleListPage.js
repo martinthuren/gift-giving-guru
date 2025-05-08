@@ -106,7 +106,7 @@ function PeopleListPage() {
             {/* Header Row with Title and Add Button */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}> {/* mb = margin bottom */}
                 <Typography variant="h4" component="h1">
-                    Your People
+                    Your people
                 </Typography>
                 <Button
                     variant="contained" // Use contained style for primary action
