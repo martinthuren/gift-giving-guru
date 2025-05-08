@@ -1,27 +1,25 @@
-// FULL CODE SNIPPET: peopleRoutes.js
+// FULL CODE SNIPPET: routes/peopleRoutes.js (No Upload Middleware)
 const express = require('express');
 const peopleController = require('../controllers/peopleController');
-const authController = require('../controllers/authController'); // To use protect middleware
+const authController = require('../controllers/authController');
+// const uploadMiddleware = require('../middleware/uploadMiddleware'); // REMOVED require
 
 const router = express.Router();
 
-// All routes below this middleware require authentication
-router.use(authController.protect);
+router.use(authController.protect); // Apply auth to all
 
 router
     .route('/')
     .get(peopleController.getAllPeople)
-    .post(peopleController.createPerson); // Change setUser to 
+    .post(peopleController.createPerson);
+
 router
     .route('/:id')
     .get(peopleController.getPerson)
-    // .patch(peopleController.updatePerson) // <-- COMMENT THIS LINE OUT
+    .patch(
+        // NO uploadMiddleware here
+        peopleController.updatePerson
+    )
     .delete(peopleController.deletePerson);
-
-// --- Nested Routes for Gift Ideas (Optional but clean) ---
-// Example: GET /api/people/123abc456def/gift-ideas
-// You would need to create a giftIdeaRouter and mount it here
-// const giftIdeaRouter = require('./giftIdeaRoutes'); // Adjust path if needed
-// router.use('/:personId/gift-ideas', giftIdeaRouter);
 
 module.exports = router;

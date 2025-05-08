@@ -83,15 +83,15 @@ async function showNotifications() {
             const notificationId = `gift-guru-reminder-${event.personId}-${event.date}`;
 
             // Create the notification using Chrome API
-            chrome.notifications.create(notificationId, {
-                type: 'basic',
-                iconUrl: 'icons/icon128.png', // Ensure this icon exists
-                title: 'Gift Guru Reminder',
-                message: message,
-                priority: 1, // Higher priority than default
-                // Optional: Add buttons requires adding the click listener below
-                // buttons: [ { title: 'View Person' } ]
-            });
+// Inside showNotifications loop in background.js
+chrome.notifications.create(notificationId, {
+    type: 'basic', // Keep type basic
+    iconUrl: 'icons/icon128.png', // Make SURE this icon file exists and is valid
+    title: 'Gift Guru Test', // Use a simple title
+    message: `Test notification for ${event.name}`, // Use a simple message
+    priority: 0 // Use default priority
+    // Remove buttons for now if you had them
+});
              console.log(`GiftGuru BG: Showing notification for ${event.name}`);
         });
     } else {
