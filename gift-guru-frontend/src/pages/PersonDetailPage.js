@@ -306,15 +306,21 @@ function PersonDetailPage() {
                                             <IconButton size="small" edge="end" title="Delete Idea" onClick={() => handleDeleteGiftIdea(idea._id, idea.idea)} sx={{ color: 'error.light' }}> <DeleteIcon fontSize="small"/> </IconButton>
                                         </Stack>
                                     } sx={{ py: 1.5 }} >
-                                    <ListItemText
-                                        primary={idea.idea}
-                                        secondary={
-                                            <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-                                                {idea.url && (<Link href={idea.url} target="_blank" rel="noopener noreferrer" variant="body2" sx={{ display: 'inline-flex', alignItems: 'center' }}> <LinkIcon fontSize="inherit" sx={{ mr: 0.5 }} /> View Link </Link> )}
-                                                {idea.notes && <Typography variant="body2" color="text.secondary">Notes: {idea.notes}</Typography>}
-                                            </Stack>
-                                        }
-                                    />
+<ListItemText
+    primary={idea.idea}
+    secondary={ // Content starts here
+        <Stack spacing={0.5} sx={{ mt: 0.5 }}> {/* Stack renders a div */}
+            {idea.url && (
+                <Link href={idea.url} target="_blank" rel="noopener noreferrer" variant="body2" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                    <LinkIcon fontSize="inherit" sx={{ mr: 0.5 }} /> View Link
+                </Link>
+            )}
+            {idea.notes && <Typography variant="body2" color="text.secondary">Notes: {idea.notes}</Typography>}
+        </Stack>
+    } // Content ends here
+    // ADD THIS PROP to prevent secondary content being wrapped in <p>
+    secondaryTypographyProps={{ component: 'div' }}
+/>
                                 </ListItem>
                                 {index < giftIdeas.length - 1 && <Divider component="li" variant="inset" />}
                             </React.Fragment>

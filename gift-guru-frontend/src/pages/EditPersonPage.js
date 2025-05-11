@@ -15,6 +15,9 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import Avatar from '@mui/material/Avatar';
+import PhotoCamera from '@mui/icons-material/PhotoCamera';
+
 
 function EditPersonPage() {
     const { id: personId } = useParams(); // Get person ID from URL
@@ -31,6 +34,11 @@ function EditPersonPage() {
     const [isSubmitting, setIsSubmitting] = useState(false); // Submitting update
     const [error, setError] = useState('');
     const [pageTitleName, setPageTitleName] = useState(''); // Store name for title after loading
+    const [imagePreview, setImagePreview] = useState(null); // State for image preview URL
+    // Ensure these state variables are declared
+const [selectedFile, setSelectedFile] = useState(null);
+const [currentImageUrl, setCurrentImageUrl] = useState(null);
+
 
     // Fetch existing person data
     const fetchPerson = useCallback(async () => {
@@ -64,6 +72,27 @@ function EditPersonPage() {
     useEffect(() => {
         fetchPerson();
     }, [fetchPerson]);
+
+    // Handle file selection change
+const handleFileChange = (event) => {
+    const file = event.target.files[0]; // Get the selected file
+    if (file) {
+        // Store the file object itself (needed for FormData)
+        setSelectedFile(file); // Assuming you also have: const [selectedFile, setSelectedFile] = useState(null);
+
+        // Create a temporary URL for previewing the selected image
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            // Update the imagePreview state with the result (a base64 data URL)
+            setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file); // Read the file content
+    } else {
+        // If user cancelled file selection, reset state
+        setSelectedFile(null);
+        setImagePreview(currentImageUrl); // Revert preview to original image URL (make sure currentImageUrl state exists)
+    }
+};
 
     // Handle form submission for update
     const handleSubmit = async (e) => {
@@ -195,6 +224,33 @@ function EditPersonPage() {
                     disabled={isSubmitting}
                     placeholder="e.g., hiking, sci-fi books, coffee"
                 />
+
+                {/* Image Preview and Upload Button */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
+                    <Avatar
+                        src={imagePreview || ''} // Shows current image or newly selected preview
+                        alt="Profile picture preview"
+                        sx={{ width: 100, height: 100, mb: 1 }}
+                    />
+                    <Button
+                        variant="outlined"
+                        component="label" // Acts as a label for the hidden input
+                        size="small"
+                        startIcon={<PhotoCamera />}
+                        disabled={isSubmitting}
+                    >
+                        Upload Picture
+                        <input
+                            type="file"
+                            hidden // The actual file input is hidden   
+                            accept="image/*" // Only allows image types
+                            onChange={handleFileChange} // Triggers preview update
+                        />
+                    </Button>
+                </Box>
+                
+                
+                
 
                 <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                     <Button

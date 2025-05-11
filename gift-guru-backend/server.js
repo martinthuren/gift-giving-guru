@@ -6,7 +6,7 @@ dotenv.config(); // Load .env first
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-// const cloudinary = require('cloudinary').v2; // REMOVED Cloudinary require
+const cloudinary = require('cloudinary').v2; // REMOVED Cloudinary require
 
 // Security Packages
 const helmet = require('helmet');
@@ -24,7 +24,19 @@ const eventRouter = require('./routes/eventRoutes');
 const userRouter = require('./routes/userRoutes');
 const giftHistoryRouter = require('./routes/giftHistoryRoutes');
 
-// --- Cloudinary Config REMOVED ---
+// --- Configure Cloudinary --- // <-- UNCOMMENT/ADD BLOCK
+if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+  cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+      secure: true
+  });
+  console.log('Cloudinary Configured.');
+} else {
+   console.warn('WARNING: Cloudinary credentials not found. Image uploads will fail.');
+}
+// --- End Cloudinary Config ---
 
 const app = express();
 

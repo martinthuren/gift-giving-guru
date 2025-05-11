@@ -36,6 +36,10 @@ const personSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    profilePictureUrl: {
+        type: String,
+        default: null
+    },
 });
 
 // Optional: Add more indexes for performance if needed
