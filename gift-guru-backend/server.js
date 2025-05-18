@@ -11,8 +11,7 @@ const cloudinary = require('cloudinary').v2; // REMOVED Cloudinary require
 // Security Packages
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-//const mongoSanitize = require('express-mongo-sanitize');
-//const xss = require('xss-clean');
+
 
 // Custom Error Handling & Routers
 const AppError = require('./utils/appError');
@@ -70,10 +69,8 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10kb' })); // Keep size limit reasonable
 
 // Data sanitization against NoSQL query injection
-//app.use(mongoSanitize());
 
 // Data sanitization against XSS (Cross-Site Scripting) attacks
-//app.use(xss());
 
 // --- Routes ---
 app.get('/', (req, res) => {

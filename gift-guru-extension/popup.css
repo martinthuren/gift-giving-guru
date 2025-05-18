@@ -114,3 +114,41 @@ button:disabled {
 #open-options-button:hover {
      background-color: #5a6268;
 }
+
+#setup-prompt h4 {
+    color: #333; /* Or your theme's primary text color */
+}
+
+#setup-prompt p {
+    line-height: 1.5;
+}
+
+/* Style for links that should look like buttons */
+a.button-link {
+    display: inline-block;
+    padding: 8px 15px;
+    background-color: #007bff; /* Or your theme's primary button color */
+    color: white !important; /* Ensure text is white */
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+    margin-bottom: 5px; /* Space below button-link */
+}
+a.button-link:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+    text-decoration: none;
+}
+
+/* Style for the main action button in the prompt */
+#setup-prompt button.action-button, #setup-prompt #open-options-button-main { /* Target by ID if unique */
+    background-color: #28a745; /* Green for go, or your theme's secondary action */
+    color: white;
+    font-weight: bold;
+    width: auto; /* Don't make it full width unless desired */
+    padding: 10px 20px;
+    margin-top: 10px;
+}
+#setup-prompt button.action-button:hover, #setup-prompt #open-options-button-main:hover {
+    background-color: #218838; /* Darker green */
+}

@@ -32,6 +32,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import LinkIcon from '@mui/icons-material/Link';
 import HistoryIcon from '@mui/icons-material/History'; // Icon for history section
+import Grid from '@mui/material/Grid';
+import Avatar from '@mui/material/Avatar';
 
 function PersonDetailPage() {
     const { id: personId } = useParams();
@@ -253,23 +255,70 @@ function PersonDetailPage() {
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
 
-            {/* --- Person Details Section --- */}
+            {/* --- Person Details Section (MODIFIED LAYOUT) --- */}
             <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
-                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, flexWrap: 'wrap' }}>
-                    <Box sx={{ mb: { xs: 2, sm: 0} }}> {/* Add bottom margin on small screens */}
-                        <Typography variant="h4" component="h1" gutterBottom>{person.name}</Typography>
-                        {person.relationship && <Typography variant="subtitle1" color="text.secondary" gutterBottom>Relationship: {person.relationship}</Typography>}
-                        {person.birthday && <Typography variant="body1" color="text.secondary" gutterBottom>Birthday: {new Date(person.birthday).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</Typography>}
+                {/* Use Grid container for layout */}
+                <Grid container spacing={3} alignItems="center"> {/* spacing adds gap between items */}
+                    {/* Grid item for Avatar (takes up some columns) */}
+                    <Grid item xs={12} sm={4} md={3} sx={{ display: 'flex', justifyContent: {xs: 'center', sm: 'flex-start'} }}> {/* Center on xs, left on sm+ */}
+                        <Avatar
+                            alt={person.name}
+                            src={person.profilePictureUrl || ''}
+                            sx={{
+                                width: { xs: 100, sm: 120, md: 150 }, // Responsive avatar size
+                                height: { xs: 100, sm: 120, md: 150 },
+                                bgcolor: 'grey.300', // Fallback background
+                                border: '2px solid', // Optional border
+                                borderColor: 'divider' // Use theme's divider color
+                            }}
+                        >
+                            {!person.profilePictureUrl && person.name ? person.name[0].toUpperCase() : null}
+                        </Avatar>
+                    </Grid>
+
+ {/* Grid item for Text Details and Actions */}
+ <Grid item xs={12} sm={8} md={9}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                             <Box sx={{ mb: { xs: 2, sm: 0 }, flexGrow: 1 }}> {/* Text details - allow to grow */}
+                                <Typography variant="h4" component="h1" gutterBottom>
+                                    {person.name}
+                                </Typography>
+                                {person.relationship && (
+                                    <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                                        Relationship: {person.relationship}
+                                    </Typography>
+                                )}
+                                {person.birthday && (
+                                    <Typography variant="body1" color="text.secondary" gutterBottom>
+                                        Birthday: {new Date(person.birthday).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </Typography>
+                                )}
+                            </Box>
+                            {/* Action Buttons using Stack for horizontal layout */}
+                            <Stack
+                                direction="row" // Keep them in a row
+                                spacing={1}     // Add space between buttons
+                                sx={{
+                                    flexShrink: 0, // Don't let the stack shrink
+                                    mt: { xs: 1, sm: 0 } // Adjust margin if needed
+                                }}
+                            >
+                                <IconButton component={RouterLink} to={`/people/${person._id}/edit`} title="Edit Person Details">
+                                    <EditIcon />
+                                </IconButton>
+                                <IconButton component={RouterLink} to="/people" title="Back to People List">
+                                    <ArrowBackIcon />
+                                </IconButton>
+                            </Stack>
+                        </Box>
+                        {/* Interests */}
                         {person.interests && person.interests.length > 0 && (
-                            <Typography variant="body1" color="text.secondary">Interests: {person.interests.join(', ')}</Typography>
+                            <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+                                Interests: {person.interests.join(', ')}
+                            </Typography>
                         )}
-                    </Box>
-                    {/* Action Buttons */}
-                    <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}> {/* Prevent shrinking */}
-                        <IconButton component={RouterLink} to={`/people/${person._id}/edit`} title="Edit Person Details"> <EditIcon /> </IconButton>
-                        <IconButton component={RouterLink} to="/people" title="Back to People List"> <ArrowBackIcon /> </IconButton>
-                    </Stack>
-                 </Box>
+                    </Grid>
+                </Grid>
             </Paper>
 
              {/* --- General Page Error Display --- */}

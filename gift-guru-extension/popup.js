@@ -1,99 +1,53 @@
-// FULL CODE SNIPPET: popup.js (Injects content.js and listens)
+// FULL CODE SNIPPET: popup.js (Enhanced Setup Prompt & Content Script Logic)
 
 // --- Configuration ---
 const API_BASE_URL = 'http://localhost:5000/api'; // Your backend API URL
+// IMPORTANT: When you deploy, change this to your live backend URL
+// const API_BASE_URL = 'https://your-gift-guru-backend.onrender.com/api';
 
 // --- DOM Elements ---
 const messageArea = document.getElementById('message-area');
 const saveGiftForm = document.getElementById('save-gift-form');
 const setupPromptDiv = document.getElementById('setup-prompt');
-// Input fields will be dynamically created/referenced below
+const popupTitleH3 = document.getElementById('popup-title'); // For changing title
+
+// Form elements within save-gift-form
 const personSelect = document.getElementById('person-select');
 const notesTextarea = document.getElementById('notes');
 const saveButton = document.getElementById('save-button');
-const openOptionsButtonInPrompt = document.getElementById('open-options-button');
-const popupOptionsButton = document.getElementById('popup-options-button');
+
+// Buttons for options
+const openOptionsButtonMain = document.getElementById('open-options-button-main'); // In enhanced prompt
+const popupOptionsButton = document.getElementById('popup-options-button'); // Persistent Gear button
+
+// Link in the setup prompt
 const websiteLinkPopup = document.getElementById('website-link-popup');
 
-// Dynamically create or ensure input elements exist (more robust than assuming they are in HTML)
+// Dynamically created/referenced input fields for idea text and URL
 let ideaTextInput = document.getElementById('idea-text');
-if (!ideaTextInput) {
-    ideaTextInput = document.createElement('input');
-    ideaTextInput.type = 'text';
-    ideaTextInput.id = 'idea-text';
-    ideaTextInput.required = true;
-    ideaTextInput.placeholder = "Gift Idea Description (auto-filled)";
-    // Add label dynamically too or assume one exists in HTML with 'for="idea-text"'
-    const label = document.createElement('label');
-    label.htmlFor = 'idea-text';
-    label.textContent = 'Idea Description:*';
-    label.style.display = 'block';
-    label.style.marginBottom = '4px';
-    label.style.fontWeight = 'bold';
-    label.style.fontSize = '13px';
-
-    const containerDiv = document.createElement('div');
-    containerDiv.className = 'form-group'; // Use existing CSS class if available
-    containerDiv.style.marginBottom = '12px';
-    containerDiv.appendChild(label);
-    containerDiv.appendChild(ideaTextInput);
-    // Insert it before the person select dropdown's container
-    if (personSelect.parentElement) {
-         saveGiftForm.insertBefore(containerDiv, personSelect.parentElement);
-    } else {
-        saveGiftForm.insertBefore(containerDiv, notesTextarea); // Fallback insertion
-    }
-}
-
 let urlTextInput = document.getElementById('idea-url');
-if (!urlTextInput) {
-    urlTextInput = document.createElement('input');
-    urlTextInput.type = 'url';
-    urlTextInput.id = 'idea-url';
-    urlTextInput.readOnly = true;
-    urlTextInput.placeholder = "URL (auto-filled)";
-    // Add label dynamically too
-     const label = document.createElement('label');
-    label.htmlFor = 'idea-url';
-    label.textContent = 'URL:';
-     label.style.display = 'block';
-    label.style.marginBottom = '4px';
-    label.style.fontWeight = 'bold';
-    label.style.fontSize = '13px';
-
-    const containerDiv = document.createElement('div');
-    containerDiv.className = 'form-group';
-    containerDiv.style.marginBottom = '12px';
-    containerDiv.appendChild(label);
-    containerDiv.appendChild(urlTextInput);
-    // Insert it after the idea text input container
-    if(ideaTextInput.parentElement){
-        ideaTextInput.parentElement.after(containerDiv);
-    } else {
-        saveGiftForm.insertBefore(containerDiv, personSelect.parentElement || notesTextarea); // Fallback
-    }
-}
-
-// Style the dynamically added inputs (basic)
-ideaTextInput.style.width = '100%'; ideaTextInput.style.padding = '8px'; ideaTextInput.style.boxSizing = 'border-box'; ideaTextInput.style.border = '1px solid #ccc';
-urlTextInput.style.width = '100%'; urlTextInput.style.padding = '8px'; urlTextInput.style.boxSizing = 'border-box'; urlTextInput.style.backgroundColor = '#eee'; urlTextInput.style.border = '1px solid #ccc'; urlTextInput.style.cursor = 'not-allowed';
-
 
 // --- Global Variables ---
-let pageDataForSave = null; // Holds { title, url, imageUrl } extracted from content script
+let pageDataForSave = null; // Holds { title, url, imageUrl } from content script
 let apiKey = null;
 
 // --- Helper Functions ---
 function showMessage(message, type = 'loading') {
-    messageArea.textContent = message;
-    messageArea.className = `message ${type}`;
-    messageArea.style.display = 'block';
+    if (messageArea) {
+        messageArea.textContent = message;
+        messageArea.className = `message ${type}`;
+        messageArea.style.display = 'block';
+    } else {
+        console.warn("Message area not found in popup.html");
+    }
 }
 
 function hideMessage() {
-    messageArea.style.display = 'none';
-    messageArea.textContent = '';
-    messageArea.className = 'message';
+    if (messageArea) {
+        messageArea.style.display = 'none';
+        messageArea.textContent = '';
+        messageArea.className = 'message';
+    }
 }
 
 // --- Core Logic ---
@@ -110,35 +64,34 @@ async function loadApiKey() {
             return false;
         }
     } catch (error) {
-        console.error("GiftGuru: Error loading API key:", error);
+        console.error("GiftGuru Popup: Error loading API key:", error);
         showMessage("Error loading configuration.", "error");
         return false;
     }
 }
 
-// 2. Inject Content Script
+// 2. Inject Content Script to get page data
 async function injectContentScript() {
     try {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tab && tab.id && tab.url && (tab.url.startsWith('http:') || tab.url.startsWith('https:'))) {
-            console.log(`GiftGuru: Injecting content script into tab ${tab.id}`);
+            console.log(`GiftGuru Popup: Injecting content script into tab ${tab.id}`);
             await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
                 files: ['content.js']
             });
-            console.log("GiftGuru: Injected content script successfully.");
-            // Data will be sent back via the message listener below
-            return true;
+            console.log("GiftGuru Popup: Injected content script successfully.");
+            return true; // Injection initiated, wait for message
         } else {
-            showMessage("Cannot run on this page (requires http/https).", "error");
+            showMessage("Cannot run on this page type (requires http/https).", "error");
             return false;
         }
     } catch (error) {
-        console.error("GiftGuru: Error injecting script:", error);
+        console.error("GiftGuru Popup: Error injecting script:", error);
         if (error.message.includes('Cannot access') || error.message.includes('extension context')) {
             showMessage("Cannot access content of this specific page (e.g., Chrome Web Store, internal pages).", "error");
         } else {
-            showMessage("Error analyzing page content.", "error");
+            showMessage("Error analyzing page content. Try reloading the page.", "error");
         }
         return false;
     }
@@ -148,14 +101,19 @@ async function injectContentScript() {
 async function fetchPeople() {
     if (!apiKey) {
         showMessage("API Key missing. Configure in options (⚙️).", "error");
-        saveGiftForm.style.display = 'none';
-        setupPromptDiv.style.display = 'block';
+        if(saveGiftForm) saveGiftForm.style.display = 'none';
+        if(setupPromptDiv) setupPromptDiv.style.display = 'block';
+        return false;
+    }
+    if (!personSelect) { // Safety check
+        console.error("GiftGuru Popup: Person select dropdown not found.");
+        showMessage("UI Error: Cannot load people.", "error");
         return false;
     }
     personSelect.disabled = true;
     personSelect.options[0].textContent = '-- Loading People --';
-    personSelect.options[0].selected = true;
-    personSelect.options[0].disabled = true;
+    personSelect.options[0].selected = true; // Ensure it's selected
+    personSelect.options[0].disabled = true; // Keep placeholder disabled
 
     try {
         const response = await fetch(`${API_BASE_URL}/people`, {
@@ -164,29 +122,31 @@ async function fetchPeople() {
         });
         const data = await response.json();
         if (!response.ok) {
-            if (response.status === 401) throw new Error(`Authentication failed (${response.status}). Invalid API Key?`);
+            if (response.status === 401) throw new Error(`Authentication failed (${response.status}). Is your API Key correct?`);
             throw new Error(data.message || `HTTP error! Status: ${response.status}`);
         }
         if (data.status === 'success' && data.data.people) {
             populatePeopleDropdown(data.data.people);
-            saveGiftForm.style.display = 'block'; // Show form only if people loaded
-            hideMessage(); // Clear loading message
+            if(saveGiftForm) saveGiftForm.style.display = 'block'; // Show form
+            if(setupPromptDiv) setupPromptDiv.style.display = 'none'; // Hide prompt
+            hideMessage(); // Clear "Analyzing page content..." or other messages
             return true;
         } else {
-            throw new Error('API response error fetching people.');
+            throw new Error('API response error when fetching people.');
         }
     } catch (error) {
-        console.error('GiftGuru: Error fetching people:', error);
+        console.error('GiftGuru Popup: Error fetching people:', error);
         showMessage(`Error fetching people: ${error.message}`, "error");
-        personSelect.options[0].textContent = '-- Error Loading --';
-        saveGiftForm.style.display = 'none'; // Hide form on error
+        personSelect.options[0].textContent = '-- Error Loading People --';
+        if(saveGiftForm) saveGiftForm.style.display = 'none';
         return false;
     }
 }
 
 // 4. Populate Dropdown
 function populatePeopleDropdown(people) {
-    personSelect.length = 1;
+    if (!personSelect) return;
+    personSelect.length = 1; // Clear previous options but keep placeholder
     personSelect.options[0].textContent = '-- Select Person --';
     personSelect.options[0].value = '';
     personSelect.options[0].disabled = true;
@@ -203,19 +163,23 @@ function populatePeopleDropdown(people) {
     } else {
         personSelect.options[0].textContent = '-- No people found --';
         personSelect.disabled = true;
-        showMessage("No people found. Add people on the website first.", "loading"); // Info style
+        showMessage("No people found. Add people on the website first.", "loading"); // 'loading' style for info
     }
 }
 
 // 5. Handle Form Submission (Save Gift Idea)
 async function handleSaveGift(event) {
     event.preventDefault();
+    if (!personSelect || !notesTextarea || !ideaTextInput || !urlTextInput || !saveButton) {
+        console.error("GiftGuru Popup: Form element missing for save.");
+        showMessage("UI Error. Please reload extension.", "error");
+        return;
+    }
 
     const selectedPersonId = personSelect.value;
     const notes = notesTextarea.value.trim();
     const ideaText = ideaTextInput.value.trim();
 
-    // Validation checks
     if (!selectedPersonId) { showMessage("Please select a person.", "error"); return; }
     if (!ideaText) { showMessage("Idea description cannot be empty.", "error"); return; }
     if (!pageDataForSave || !pageDataForSave.url) { showMessage("Error: Page URL not available.", "error"); return; }
@@ -227,10 +191,10 @@ async function handleSaveGift(event) {
 
     const giftData = {
         person: selectedPersonId,
-        idea: ideaText, // Use text from the input field
+        idea: ideaText,
         url: pageDataForSave.url,
         notes: notes,
-        imageUrl: pageDataForSave.imageUrl || undefined // Include image URL if found, else undefined
+        imageUrl: pageDataForSave.imageUrl || undefined
     };
 
     try {
@@ -240,23 +204,22 @@ async function handleSaveGift(event) {
             body: JSON.stringify(giftData)
         });
         const responseData = await response.json();
-
         if (!response.ok) {
-            if (response.status === 401) throw new Error(`Auth failed (${response.status}). Invalid API Key?`);
+            if (response.status === 401) throw new Error(`Authentication failed (${response.status}). Invalid API Key?`);
             throw new Error(responseData.message || `HTTP error! Status: ${response.status}`);
         }
         if (responseData.status === 'success') {
-            showMessage("Gift idea saved!", "success");
+            showMessage("Gift idea saved successfully!", "success");
             notesTextarea.value = '';
-            personSelect.value = ''; // Reset dropdown selection
-            // Don't reset idea/url inputs, keep them for reference until popup closes
-            setTimeout(hideMessage, 3000); // Hide success message after 3s
-            // setTimeout(() => window.close(), 1500); // Optional: Close popup
+            personSelect.value = ''; // Reset dropdown
+            // ideaTextInput.value = pageDataForSave?.title || ''; // Optionally reset idea text
+            setTimeout(hideMessage, 3000);
+            // setTimeout(() => window.close(), 2000); // Optional: Close popup
         } else {
-             throw new Error(responseData.message || 'Failed to save.');
+             throw new Error(responseData.message || 'Failed to save gift idea.');
         }
     } catch (error) {
-        console.error('GiftGuru: Error saving gift idea:', error);
+        console.error('GiftGuru Popup: Error saving gift idea:', error);
         showMessage(`Error saving: ${error.message}`, "error");
     } finally {
         saveButton.disabled = false;
@@ -269,69 +232,112 @@ function openOptionsPage() {
     chrome.runtime.openOptionsPage();
 }
 
+// --- Function to Create and Insert Inputs if they don't exist in HTML ---
+function ensureFormInputs() {
+    if (!document.getElementById('idea-text')) {
+        ideaTextInput = document.createElement('input');
+        ideaTextInput.type = 'text';
+        ideaTextInput.id = 'idea-text';
+        ideaTextInput.required = true;
+        ideaTextInput.placeholder = "Gift Idea Description (auto-filled)";
+        const labelIdea = document.createElement('label');
+        labelIdea.htmlFor = 'idea-text'; labelIdea.textContent = 'Idea Description:*';
+        const containerIdea = document.createElement('div'); containerIdea.className = 'form-group';
+        containerIdea.appendChild(labelIdea); containerIdea.appendChild(ideaTextInput);
+        if (personSelect && personSelect.parentElement) saveGiftForm.insertBefore(containerIdea, personSelect.parentElement);
+        else if (notesTextarea) saveGiftForm.insertBefore(containerIdea, notesTextarea);
+
+        ideaTextInput.style.width = '100%'; ideaTextInput.style.padding = '8px'; ideaTextInput.style.boxSizing = 'border-box'; ideaTextInput.style.border = '1px solid #ccc'; ideaTextInput.style.marginBottom = '6px';
+        labelIdea.style.display = 'block'; labelIdea.style.marginBottom = '4px'; labelIdea.style.fontWeight = 'bold'; labelIdea.style.fontSize = '13px';
+        containerIdea.style.marginBottom = '12px';
+
+    } else {
+        ideaTextInput = document.getElementById('idea-text');
+    }
+
+    if (!document.getElementById('idea-url')) {
+        urlTextInput = document.createElement('input');
+        urlTextInput.type = 'url';
+        urlTextInput.id = 'idea-url';
+        urlTextInput.readOnly = true;
+        urlTextInput.placeholder = "URL (auto-filled)";
+        const labelUrl = document.createElement('label');
+        labelUrl.htmlFor = 'idea-url'; labelUrl.textContent = 'URL:';
+        const containerUrl = document.createElement('div'); containerUrl.className = 'form-group';
+        containerUrl.appendChild(labelUrl); containerUrl.appendChild(urlTextInput);
+        if (ideaTextInput && ideaTextInput.parentElement) ideaTextInput.parentElement.after(containerUrl);
+        else if (personSelect && personSelect.parentElement) saveGiftForm.insertBefore(containerUrl, personSelect.parentElement);
+        else if (notesTextarea) saveGiftForm.insertBefore(containerUrl, notesTextarea);
+
+        urlTextInput.style.width = '100%'; urlTextInput.style.padding = '8px'; urlTextInput.style.boxSizing = 'border-box'; urlTextInput.style.backgroundColor = '#eee'; urlTextInput.style.border = '1px solid #ccc'; urlTextInput.style.cursor = 'not-allowed';
+        labelUrl.style.display = 'block'; labelUrl.style.marginBottom = '4px'; labelUrl.style.fontWeight = 'bold'; labelUrl.style.fontSize = '13px';
+        containerUrl.style.marginBottom = '12px';
+    } else {
+        urlTextInput = document.getElementById('idea-url');
+    }
+}
+
+
 // --- Listener for Messages from Content Script ---
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("GiftGuru Popup received message:", message);
+    console.log("GiftGuru Popup: Received message from content script -", message.type);
     if (message.type === 'GIFTGURU_PAGE_DATA') {
-        pageDataForSave = message.payload; // Store the data globally
+        pageDataForSave = message.payload;
 
-        // Update the input fields
-        ideaTextInput.value = pageDataForSave.title || '';
-        urlTextInput.value = pageDataForSave.url || '';
+        if (ideaTextInput) ideaTextInput.value = pageDataForSave.title || '';
+        if (urlTextInput) urlTextInput.value = pageDataForSave.url || '';
 
-        // Now that content script has run and sent data (or failed), fetch people
-        if (apiKey) { // Ensure API key is loaded before fetching
-             fetchPeople(); // This will handle showing the form or errors
+        // Message received, now proceed to fetch people if API key is loaded
+        if (apiKey) {
+             fetchPeople(); // This will show the form or errors related to people fetching
         } else {
-            // This case should be rare if initial check works, but handle anyway
-             showMessage("API Key missing. Configure in options (⚙️).", "error");
-             saveGiftForm.style.display = 'none';
-             setupPromptDiv.style.display = 'block';
+             // This scenario means API key was missing, then content script ran (which is unlikely)
+             // Or API key loaded after content script message (also unlikely)
+             // Default to showing setup prompt if API key still not available
+             hideMessage();
+             if (popupTitleH3) popupTitleH3.textContent = "Welcome!";
+             if (setupPromptDiv) setupPromptDiv.style.display = 'block';
+             if (saveGiftForm) saveGiftForm.style.display = 'none';
         }
     }
-    // Indicate message was received (optional)
-    // return true;
+    // return true; // To indicate async response, not needed here
 });
 
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
+    // Ensure form inputs are present/created before trying to use them
+    if(saveGiftForm) ensureFormInputs();
+
     showMessage("Initializing...", "loading");
-    saveGiftForm.style.display = 'none';
-    setupPromptDiv.style.display = 'none';
+    if(saveGiftForm) saveGiftForm.style.display = 'none';
+    if(setupPromptDiv) setupPromptDiv.style.display = 'none';
 
-    // Remove static placeholders if they existed in HTML
-    const oldTitleP = document.getElementById('page-title');
-    const oldUrlP = document.getElementById('page-url');
-    if (oldTitleP) oldTitleP.parentElement.remove();
-    if (oldUrlP) oldUrlP.parentElement.remove();
-
+    // Update website link in the prompt
+    const webSettingsUrl = 'http://localhost:3000/settings'; // Change to deployed URL later
+    if (websiteLinkPopup) websiteLinkPopup.href = webSettingsUrl;
 
     const keyLoaded = await loadApiKey();
 
     if (!keyLoaded) {
-        showMessage("API Key not found. Please configure in options (⚙️).", "error");
-        setupPromptDiv.style.display = 'block';
-        saveGiftForm.style.display = 'none';
+        hideMessage();
+        if (popupTitleH3) popupTitleH3.textContent = "Welcome!";
+        if (setupPromptDiv) setupPromptDiv.style.display = 'block';
+        if (saveGiftForm) saveGiftForm.style.display = 'none';
     } else {
-        // Key found, inject content script to get page data.
-        // The message listener above will handle the next step (fetchPeople).
-         showMessage("Analyzing page content...", "loading");
+        if (popupTitleH3) popupTitleH3.textContent = "Save Gift Idea";
+        if (setupPromptDiv) setupPromptDiv.style.display = 'none';
+        showMessage("Analyzing page content...", "loading");
         const injected = await injectContentScript();
         if (!injected) {
-             // If injection failed, hide everything, message is already shown
-             saveGiftForm.style.display = 'none';
-             setupPromptDiv.style.display = 'none';
+            if(saveGiftForm) saveGiftForm.style.display = 'none';
+            // Message already shown by injectContentScript
         }
-        // Do NOT call fetchPeople here anymore
+        // Do NOT call fetchPeople() here directly. Wait for message from content script.
     }
-
-    // Set website link dynamically if needed
-    // const settingsUrl = 'http://localhost:3000/settings';
-    // if (websiteLinkPopup) websiteLinkPopup.href = settingsUrl;
 });
 
 // --- Event Listeners ---
-saveGiftForm.addEventListener('submit', handleSaveGift);
-if (openOptionsButtonInPrompt) openOptionsButtonInPrompt.addEventListener('click', openOptionsPage);
+if (saveGiftForm) saveGiftForm.addEventListener('submit', handleSaveGift);
+if (openOptionsButtonMain) openOptionsButtonMain.addEventListener('click', openOptionsPage);
 if (popupOptionsButton) popupOptionsButton.addEventListener('click', openOptionsPage);

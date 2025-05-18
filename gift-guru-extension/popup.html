@@ -1,60 +1,59 @@
-<!-- FULL CODE SNIPPET: popup.html (with persistent options gear) -->
+<!-- popup.html (Enhance setup-prompt section) -->
 <!DOCTYPE html>
 <html>
 <head>
     <title>Save Gift Idea</title>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="popup.css"> <!-- Link to CSS -->
+    <link rel="stylesheet" href="popup.css">
 </head>
 <body>
     <div class="container">
-        <!-- Header area with Title and Persistent Options Button -->
         <div style="position: relative; border-bottom: 1px solid #eee; margin-bottom: 15px; padding-bottom: 10px;">
-            <h3 style="text-align: center; margin: 0; padding: 0;">Save Gift Idea</h3>
-            <button id="popup-options-button" title="Open Settings" style="position: absolute; top: -5px; right: -5px; width: auto; padding: 5px 8px; font-size: 1.2em; background: none; border: none; color: #555; cursor: pointer;">
-                ⚙ <!-- Gear icon HTML entity -->
+            <h3 style="text-align: center; margin: 0; padding: 0;" id="popup-title">Save Gift Idea</h3>
+            <button id="popup-options-button" title="Open Settings" style="/* ... existing styles ... */">
+                ⚙
             </button>
         </div>
 
-        <!-- Area for status messages (loading, error, success) -->
         <div id="message-area" class="message" style="display: none;"></div>
 
-        <!-- Form for saving the gift (hidden initially or if API key missing) -->
         <form id="save-gift-form" style="display: none;">
-             <div class="form-group">
-                 <label>Page Title:</label>
-                 <p id="page-title" class="page-info">Loading...</p> <!-- Placeholder text -->
-             </div>
-             <div class="form-group">
-                 <label>URL:</label>
-                 <p id="page-url" class="page-info">Loading...</p> <!-- Placeholder text -->
-             </div>
-            <div class="form-group">
-                <label for="person-select">Save for Person:*</label>
-                <select id="person-select" required>
-                    <option value="" disabled selected>-- Loading People --</option>
-                    <!-- Options will be populated by popup.js -->
-                </select>
-            </div>
-             <div class="form-group">
-                 <label for="notes">Notes (Optional):</label>
-                 <textarea id="notes" rows="3"></textarea>
-             </div>
+        <!-- Idea Text and URL inputs will be added by popup.js BEFORE this -->
+        <div class="form-group">
+            <label for="person-select">Save for Person:*</label>
+            <select id="person-select" required>
+                <option value="" disabled selected>-- Initializing --</option>
+            </select>
+        </div>
+        <div class="form-group">
+             <label for="notes">Notes (Optional):</label>
+             <textarea id="notes" rows="3"></textarea>
+        </div>
 
-            <button type="submit" id="save-button">Save Idea</button>
-        </form>
+        <button type="submit" id="save-button">Save Idea</button>        </form>
 
-        <!-- Prompt shown if API Key is missing -->
-         <div id="setup-prompt" style="display: none;">
-             <p>Please set up your API Key!</p>
-             <ol>
-                 <li>Generate an API Key in the <a href="#" id="website-link-popup" target="_blank">Gift Guru website settings</a>.</li>
-                 <li>Open Extension Options (click the gear icon ⚙️ above or the button below) and paste the key.</li>
-             </ol>
-             <button id="open-options-button">Open Options Page</button> <!-- Button within the prompt -->
+         <div id="setup-prompt" style="display: none; text-align: center; padding: 10px;">
+             <img src="icons/icon48.png" alt="Gift Guru Icon" style="margin-bottom: 10px;" /> {/* Optional: Add icon */}
+             <h4 style="margin-top: 0; margin-bottom: 10px;">Welcome to Gift Guru Helper!</h4>
+             <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">
+                 Quickly save gift ideas from any webpage to your Gift Giving Guru account.
+             </p>
+             <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">
+                 To get started, you need to connect the extension to your account.
+             </p>
+             <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 5px;">
+                 <p style="margin-top:0; font-weight: bold;">Step 1: Get your API Key</p>
+                 <p style="font-size: 0.85em;">
+                     <a href="http://localhost:3000/settings" id="website-link-popup" target="_blank" class="button-link">
+                         Go to Website Settings
+                     </a>
+                     <br/>(Login if needed, then generate/copy your API key)
+                 </p>
+                 <p style="margin-top:15px; font-weight: bold;">Step 2: Save API Key in Extension</p>
+                 <Button id="open-options-button-main" class="action-button">Open Extension Options & Paste Key</Button>
+             </div>
          </div>
-
     </div>
-    <script src="popup.js"></script> <!-- Link to JavaScript -->
+    <script src="popup.js"></script>
 </body>
 </html>
